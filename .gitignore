@@ -1,0 +1,11 @@
+mbed-os
+BUILD
+cmake-build-debug
+SX1280Lib
+UniGraphic
+
+*.pyc
+*.html
+.idea
+.mbed
+
