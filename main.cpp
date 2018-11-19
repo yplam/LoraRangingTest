@@ -30,8 +30,6 @@ enum AppStates
     APP_RANGING_TIMEOUT,
     APP_RANGING_CONFIG,
     APP_RNG,
-    SEND_PING_MSG,
-    SEND_PONG_MSG,
     APP_RX,                     // Rx done
     APP_RX_TIMEOUT,             // Rx timeout
     APP_RX_ERROR,               // Rx error
@@ -147,12 +145,6 @@ const double   RNG_FGRAD_0400[] = { -0.148, -0.214, -0.419, -0.853, -1.686, -3.4
 const double   RNG_FGRAD_0800[] = { -0.041, -0.811, -0.218, -0.429, -0.853, -1.737 };
 const double   RNG_FGRAD_1600[] = { 0.103,  -0.041, -0.101, -0.211, -0.424, -0.87  };
 
-/*!
- * \brief Define the possible message type for the Ping-Pong and PER apps
- */
-const uint8_t PingMsg[] = "PING";
-const uint8_t PongMsg[] = "PONG";
-const uint8_t PerMsg[]  = "PER";
 
 /*!
  * \brief Buffer and its size
@@ -219,18 +211,12 @@ RadioCallbacks_t Callbacks =
         NULL,             // cadDone
     };
 
-//SX1280Hal Radio(LORA_MOSI, LORA_MISO, LORA_SCLK, LORA_NSS, LORA_BUSY, LORA_DIO1, NC, NC, LORA_RST, &Callbacks);
-SX1280Hal Radio(PA_7, PA_6, PA_5, PA_4, PC_8, PC_6, NC, NC, PA_12, &Callbacks);
+SX1280Hal Radio(LORA_MOSI, LORA_MISO, LORA_SCLK, LORA_NSS, LORA_BUSY, LORA_DIO1, NC, NC, LORA_RST, &Callbacks);
 DigitalOut TX_LED(APP_LED1);
 DigitalOut RX_LED(APP_LED2);
 #ifdef APP_HAS_LCD
 ST7565 LCD(SPI_8, 40000000, LCD_MOSI, LCD_MISO, LCD_SCLK, LCD_NSS, LCD_RESET, LCD_DC, "lcd", 128, 64);
 #endif
-/*!
- * \brief Mask of IRQs
- */
-uint16_t IrqMask = 0x0000;
-
 
 /*!
  * \brief Locals parameters and status for radio API
@@ -241,14 +227,8 @@ PacketStatus_t PacketStatus;
 ModulationParams_t ModulationParams;
 
 /*!
- * \brief Flag to indicate if the demo is already running
- */
-static bool DemoRunning = false;
-
-/*!
  * \brief Flag holding the current internal state of the demo application
  */
-//static uint8_t DemoInternalState = APP_IDLE;
 AppStates AppState = APP_IDLE;
 /*!
  * \brief Ticker for master to synch Tx frames. Flags for PER and PingPong demo
@@ -264,11 +244,6 @@ static bool SendNext = false;
 Ticker ReceiveNextPacket;
 static bool ReceiveNext = false;
 
-/*!
- * \brief Hold last Rx packet number to compute PER in PER and PingPong demo
- */
-static uint32_t PacketRxSequence = 0;
-static uint32_t PacketRxSequencePrev = 0;
 
 int8_t RssiValue=0;
 uint32_t CntPacketTx = 0;
@@ -287,11 +262,14 @@ uint16_t RxTimeOutCount;     // Rx packet received KO (by timeout)
 uint32_t CntPacketRxKOSlave;
 uint8_t RngAntenna;          // NOT USED
 
+/**
+ * LCD CONFIGS
+ */
 unsigned short backgroundcolor=White;
 unsigned short foregroundcolor=Black;
-
 char orient=1;
 uint8_t refreshDisplay = 0;
+
 /*!
  * \brief Callback of ticker PerSendNextPacket
  */
@@ -475,7 +453,7 @@ int main() {
   }
 
   Radio.SetPollingMode( );
-  Radio.SetLNAGainSetting(LNA_LOW_POWER_MODE);
+  Radio.SetLNAGainSetting(LNA_HIGH_SENSITIVITY_MODE);
 
 
   uint16_t TimeOnAir = RX_TX_INTER_PACKET_DELAY;
